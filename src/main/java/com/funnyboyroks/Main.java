@@ -39,54 +39,16 @@ public class Main {
             System.exit(1);
         }
 
-        var regionDrawer = new RegionDrawer(file, args[1].equalsIgnoreCase("alpha") ? RegionDrawer.ColorMode.ALPHA : RegionDrawer.ColorMode.HUE, 100);
+        RegionDrawer regionDrawer = new RegionDrawer(file, args[1].equalsIgnoreCase("alpha") ? RegionDrawer.ColorMode.ALPHA : RegionDrawer.ColorMode.HUE, 100);
         regionDrawer.fillBackground = args[2].equalsIgnoreCase("transparent") ? null : new Color(Integer.parseInt(args[2].substring(1), 16));
         switch (DrawType.get(args[0])) {
             case CHUNK_SIZE -> regionDrawer.drawChunkSize();
             case CHUNK_TIME -> regionDrawer.drawChunkTimestamp();
             case REGION_SIZE -> regionDrawer.drawFileSize();
         }
-        var key = regionDrawer.saveImage();
+        String key = regionDrawer.saveImage();
         System.out.println("Image saved to https://bytebin.lucko.me/" + key);
 
-
-//        List<RegionDrawer> drawers = new ArrayList<>();
-//
-//        for (int i = 3; i < args.length; i++) {
-//            File file = new File(args[i]);
-//
-//            drawers.add(new RegionDrawer(file, args[1].equalsIgnoreCase("alpha") ? RegionDrawer.ColorMode.ALPHA : RegionDrawer.ColorMode.HUE, 100))
-//        }
-//
-//        var images = drawers
-//            .stream()
-//            .map(d -> switch (DrawType.get(args[0])) {
-//                case CHUNK_SIZE -> d.drawChunkSize();
-//                case CHUNK_TIME -> d.drawChunkTimestamp();
-//                case REGION_SIZE -> d.drawFileSize();
-//            })
-//            .toList();
-//
-//        var maxHeight = images.stream().mapToInt(BufferedImage::getHeight).max().orElseThrow();
-//        var maxWidth = images.stream().mapToInt(BufferedImage::getHeight).max().orElseThrow();
-
-//        var directory = new File("/home/funnyboy_roks/Documents/temp/fl/1.19-Update/region-stuff/fl-regions/region");
-//
-//        RegionDrawer draw = new RegionDrawer(directory, RegionDrawer.ColorMode.ALPHA, 100);
-////        draw.fillBackground = Color.BLACK;
-//        draw.padding = 10;
-//
-//        draw.colorMode = RegionDrawer.ColorMode.HUE;
-//        BufferedImage fileSize = draw.drawChunkSize();
-//        draw.saveImage("hue");
-//        System.out.println("Hue drawn");
-//
-//        draw.colorMode = RegionDrawer.ColorMode.ALPHA;
-//        draw.drawChunkSize();
-//        draw.saveImage("alpha");
-//        System.out.println("Alpha Drawn");
-//
-////        System.out.println("https://bytebin.lucko.me/" + saveKey);
 
     }
 

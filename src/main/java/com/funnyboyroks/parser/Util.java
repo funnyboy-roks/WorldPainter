@@ -16,7 +16,7 @@ public class Util {
 
         long out = 0;
         for (int i = 0; i < length; i++) {
-            out |= (input[offset + i] & 0xff) << (8 * (length - i - 1));
+            out |= (long) (input[offset + i] & 0xff) << (8 * (length - i - 1));
         }
         return out;
 

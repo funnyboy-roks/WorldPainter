@@ -1,10 +1,10 @@
 package com.funnyboyroks.painter;
 
+import com.funnyboyroks.parser.Chunk;
 import com.funnyboyroks.parser.Region;
 import com.funnyboyroks.parser.Util;
 import me.tongfei.progressbar.ProgressBar;
 import me.tongfei.progressbar.ProgressBarBuilder;
-import me.tongfei.progressbar.ProgressBarStyle;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -21,7 +21,9 @@ import java.util.Objects;
 
 public class RegionDrawer {
 
-    public final List<Region>  regions;
+    public final List<File>    regionFiles;
+    public       List<Region>  regions;
+    public final String        name;
     public       BufferedImage image;
     public       Graphics2D    canvas;
     public       int           regionSize;
@@ -35,16 +37,40 @@ public class RegionDrawer {
             throw new RuntimeException("inputDirectory is not a directory");
         }
         File[] files = inputDirectory.listFiles((f, s) -> s.matches("r\\.(-?\\d+)\\.(-?\\d+)\\.mca$"));
+        this.name = inputDirectory.getName();
         if (files == null) throw new RuntimeException();
+        this.regionFiles = Arrays.stream(files).toList();
 
+        this.regions = null;
+
+        this.regionSize = this.regionFiles.stream()
+            .map(File::getName)
+            .mapToInt(s -> {
+                String[] parts = s.split("\\.");
+                int x = Integer.parseInt(parts[1]);
+                int z = Integer.parseInt(parts[2]);
+                return Math.max(Math.abs(x), Math.abs(z));
+            })
+            .filter(n -> n < maxRadius)
+            .max()
+            .orElseThrow();
+
+        this.colorMode = colorMode;
+
+    }
+
+    private void parseRegions() {
+        if (this.regions != null) {
+            return;
+        }
         try (
             ProgressBar pb = new ProgressBarBuilder()
                 .setMaxRenderedLength(150)
-                .setTaskName("Reading directory " + inputDirectory.getName() + "/")
-                .setInitialMax(files.length)
+                .setTaskName("Reading directory " + this.name + "/")
+                .setInitialMax(this.regionFiles.size())
                 .build()
         ) {
-            this.regions = Arrays.stream(files).map(file -> {
+            this.regions = this.regionFiles.stream().map(file -> {
                 pb.step();
                 try {
                     return new Region(file);
@@ -53,9 +79,6 @@ public class RegionDrawer {
                 }
             }).toList();
         }
-
-        this.regionSize = regions.stream().mapToInt(r -> Math.max(Math.abs(r.x), Math.abs(r.z))).filter(n -> n < maxRadius).max().orElseThrow();
-        this.colorMode = colorMode;
 
     }
 
@@ -76,7 +99,7 @@ public class RegionDrawer {
             http.setRequestProperty("User-Agent", "WorldPainter");
             ImageIO.write(image, "png", http.getOutputStream());
 
-            var responseJson = new String(http.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            String responseJson = new String(http.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             return responseJson.substring(8, responseJson.length() - 2);
 
 
@@ -99,7 +122,7 @@ public class RegionDrawer {
         x += this.image.getWidth() / 2;
         y += this.image.getHeight() / 2;
 
-        var prev = this.canvas.getColor();
+        Color prev = this.canvas.getColor();
         this.canvas.setColor(colour);
         this.canvas.drawRect(x, y, 1, 1);
         this.canvas.setColor(prev);
@@ -109,18 +132,21 @@ public class RegionDrawer {
     public BufferedImage drawFileSize() {
         this.createImage((this.regionSize + padding) * 2, (this.regionSize + padding) * 2);
 
-        int minSize = Integer.MAX_VALUE;
-        int maxSize = 0;
+        long minSize = Integer.MAX_VALUE;
+        long maxSize = 0;
 
-        for (Region r : regions) {
-            if (r.size > maxSize) maxSize = r.size;
-            if (r.size < minSize) minSize = r.size;
+        for (File f : regionFiles) {
+            if (f.length() > maxSize) maxSize = f.length();
+            if (f.length() < minSize) minSize = f.length();
         }
 
-        for (Region r : regions) {
+        for (File f : regionFiles) {
+            String[] parts = f.getName().split("\\.");
+            int x = Integer.parseInt(parts[1]);
+            int z = Integer.parseInt(parts[2]);
             switch (colorMode) {
-                case HUE -> point(Color.getHSBColor(Util.map(r.size, minSize, maxSize, .4f, 0), 1, 1), r.x, r.z);
-                case ALPHA -> point(new Color(255, 0, 0, (int) Util.map(r.size, minSize, maxSize, 1, 255)), r.x, r.z);
+                case HUE -> point(Color.getHSBColor(Util.map(f.length(), minSize, maxSize, .4f, 0), 1, 1), x, z);
+                case ALPHA -> point(new Color(255, 0, 0, (int) Util.map(f.length(), minSize, maxSize, 1, 255)), x, z);
             }
         }
 
@@ -129,13 +155,14 @@ public class RegionDrawer {
     }
 
     public BufferedImage drawChunkSize() {
+        this.parseRegions();
         this.createImage((this.regionSize + padding) * 2 * 32, (this.regionSize + padding) * 2 * 32);
 
         long minSize = Integer.MAX_VALUE;
         long maxSize = 0;
 
         for (Region r : regions) {
-            var size = Arrays.stream(r.chunks).filter(Objects::nonNull).mapToLong(c -> c.length).max().orElseThrow();
+            long size = Arrays.stream(r.chunks).filter(Objects::nonNull).mapToLong(c -> c.length).max().orElseThrow();
             if (size > maxSize) maxSize = size;
             if (size < minSize) minSize = size;
         }
@@ -143,9 +170,9 @@ public class RegionDrawer {
         for (Region r : regions) {
             for (int x = 0; x < 32; x++) {
                 for (int z = 0; z < 32; z++) {
-                    var chunk = r.getChunk(x, z);
+                    Chunk chunk = r.getChunk(x, z);
                     if (chunk == null) continue;
-                    var len = Math.min(10000, chunk.length);
+                    long len = Math.min(10000, chunk.length);
                     switch (colorMode) {
                         case HUE ->
                             point(Color.getHSBColor(Util.map(len, minSize, 10000, 0.25f, 0), 1, 1), r.x * 32 + x, r.z * 32 + z);
@@ -161,13 +188,14 @@ public class RegionDrawer {
     }
 
     public BufferedImage drawChunkTimestamp() {
+        this.parseRegions();
         this.createImage((this.regionSize + padding) * 2 * 32, (this.regionSize + padding) * 2 * 32);
 
         long minTS = Integer.MAX_VALUE;
         long maxTS = 0;
 
         for (Region r : regions) {
-            var size = Arrays.stream(r.chunks).filter(Objects::nonNull).mapToLong(c -> c.timestamp).max().orElseThrow();
+            long size = Arrays.stream(r.chunks).filter(Objects::nonNull).mapToLong(c -> c.timestamp).max().orElseThrow();
             if (size > maxTS) maxTS = size;
             if (size < minTS) minTS = size;
         }
@@ -175,7 +203,7 @@ public class RegionDrawer {
         for (Region r : regions) {
             for (int x = 0; x < 32; x++) {
                 for (int z = 0; z < 32; z++) {
-                    var chunk = r.getChunk(x, z);
+                    Chunk chunk = r.getChunk(x, z);
                     if (chunk == null) continue;
                     switch (colorMode) {
                         case HUE ->
