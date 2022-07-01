@@ -73,11 +73,11 @@ public class RegionDrawer {
             this.regions = this.regionFiles.stream().map(file -> {
                 pb.step();
                 try {
-                    return new Region(file);
+                    return Region.from(file);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }).toList();
+            }).filter(Objects::nonNull).toList();
         }
 
     }
