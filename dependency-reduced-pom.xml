@@ -5,6 +5,7 @@
   <artifactId>WorldPainter</artifactId>
   <version>1.0-SNAPSHOT</version>
   <build>
+    <finalName>WorldPainter</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>

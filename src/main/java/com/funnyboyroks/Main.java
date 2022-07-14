@@ -1,60 +1,75 @@
 package com.funnyboyroks;
 
-import com.funnyboyroks.painter.RegionDrawer;
-
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 
 public class Main {
 
-    private static final String USAGE = "Usage: WorldPainter.jar <region_size|chunk_size|chunk_time> <hue|alpha> <#bgHex|transparent> <regionDirectories>";
+    private static final String USAGE = "Usage: WorldPainter.jar <region|chunk> <hue|alpha> <#bgHex|transparent> [worldborder] <regionDirectory>";
 
-    public static void main(String[] args) {
-
-        if (
-            args.length < 4
-            || DrawType.get(args[0]) == null
-            || !(args[1].equalsIgnoreCase("hue") || args[1].equalsIgnoreCase("alpha"))
-        ) {
-            System.err.println(USAGE);
-            System.exit(1);
-        }
-
-        if (args[2].startsWith("#")) {
+    public static void main(String[] argsArr) {
+        if (argsArr.length > 1 && argsArr[0].equals("2")) {
+            String[] args2 = new String[argsArr.length - 1];
+            System.arraycopy(argsArr, 1, args2, 0, args2.length);
             try {
-                Integer.parseInt(args[2].substring(1), 16);
-            } catch (NumberFormatException ex) {
-                System.err.println(USAGE);
-                System.exit(1);
+                Main2.main(args2);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        } else if (!args[2].equalsIgnoreCase("transparent")) {
+            return;
+        }
+        Queue<String> args = new LinkedList<>(List.of(argsArr));
+
+        DrawType type = null;
+        RegionDrawer.ColorMode colourMode = null;
+        Color background = null;
+        int worldborder = -1;
+        File file = null;
+
+        try {
+            type = DrawType.get(args.poll());
+
+            colourMode = args.poll().equalsIgnoreCase("alpha") ? RegionDrawer.ColorMode.ALPHA : RegionDrawer.ColorMode.HUE;
+
+            background = args.peek().startsWith("#") ? new Color(Integer.parseInt(args.peek().substring(1), 16)) : null;
+            args.poll();
+
+            try {
+                worldborder = Integer.parseInt(args.peek());
+                args.poll();
+            } catch (Exception ignored) {
+            }
+
+            file = new File(args.poll());
+        } catch (NullPointerException ex) {
             System.err.println(USAGE);
+            ex.printStackTrace();
             System.exit(1);
         }
 
-        File file = new File(args[3]);
-        if (!file.exists() || !file.isDirectory()) {
-            System.err.println(USAGE);
-            System.exit(1);
+        RegionDrawer regionDrawer = new RegionDrawer(file, colourMode, worldborder);
+        regionDrawer.fillBackground = background;
+        switch (type) {
+            case CHUNK -> regionDrawer.drawChunkSize();
+            case REGION -> regionDrawer.drawFileSize();
         }
 
-        RegionDrawer regionDrawer = new RegionDrawer(file, args[1].equalsIgnoreCase("alpha") ? RegionDrawer.ColorMode.ALPHA : RegionDrawer.ColorMode.HUE, 100);
-        regionDrawer.fillBackground = args[2].equalsIgnoreCase("transparent") ? null : new Color(Integer.parseInt(args[2].substring(1), 16));
-        switch (DrawType.get(args[0])) {
-            case CHUNK_SIZE -> regionDrawer.drawChunkSize();
-            case CHUNK_TIME -> regionDrawer.drawChunkTimestamp();
-            case REGION_SIZE -> regionDrawer.drawFileSize();
-        }
-        String key = regionDrawer.saveImage();
-        System.out.println("Image saved to https://bytebin.lucko.me/" + key);
+//        String key = regionDrawer.saveImage();
+//        System.out.println("Image saved to https://bytebin.lucko.me/" + key);
+
+        regionDrawer.saveImage("draw-" + file.getName());
 
 
     }
 
 
     public enum DrawType {
-        REGION_SIZE, CHUNK_SIZE, CHUNK_TIME;
+        REGION, CHUNK;
 
         public static DrawType get(String name) {
             return Arrays.stream(values()).filter(n -> n.name().equalsIgnoreCase(name)).findFirst().orElse(null);

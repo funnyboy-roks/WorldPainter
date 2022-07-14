@@ -43,6 +43,7 @@
             </plugin>
 
         </plugins>
+        <finalName>WorldPainter</finalName>
     </build>
 
 
