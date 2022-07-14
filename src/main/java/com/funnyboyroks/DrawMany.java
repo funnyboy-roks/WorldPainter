@@ -1,6 +1,5 @@
 package com.funnyboyroks;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -8,19 +7,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Queue;
 import java.util.*;
-import java.util.function.Function;
 
-public class Main2 {
+public class DrawMany {
 
     private static final String USAGE = "Usage: WorldPainter.jar <regionDirectories...>";
 
-    public static void main(String[] argsArr) throws IOException {
-//        argsArr = new String[]{
-//            "/home/funnyboy_roks/servers/1.19/Paper/world/region", "25000",
-////            "/home/funnyboy_roks/Documents/fl-server/regions/world", "25000", "#005207",
-//            "/home/funnyboy_roks/servers/1.19/Paper/pocket/region", "5000", "#0", //"#370101",
-//            "/home/funnyboy_roks/servers/1.19/Paper/world_the_end/DIM1/region", "5000", "#0f0022",
-//            };
+    public static void run(String[] argsArr) {
 
         Queue<String> args = new LinkedList<>(List.of(argsArr));
         List<RegionDrawer> drawers = new ArrayList<>();
@@ -76,8 +68,8 @@ public class Main2 {
         }
         System.out.println("Uploading...");
         String key = RegionDrawer.uploadImage(image);
-        System.out.println("https://bytebin.lucko.me/" + key);
-//        ImageIO.write(image, "png", new File(drawers.size() + "-worlds-chunks.png"));
+        if(key != null)
+            System.out.println("https://bytebin.lucko.me/" + key);
 
 
     }
