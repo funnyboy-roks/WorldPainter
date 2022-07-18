@@ -2,15 +2,12 @@ package com.funnyboyroks;
 
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
 public class DrawOne {
-
-    private static final String USAGE = "Usage: WorldPainter.jar 1 <region|chunk> <hue|alpha> <#bgHex|transparent> [worldborder] <regionDirectory>";
 
     public static void run(String[] argsArr) {
         Queue<String> args = new LinkedList<>(List.of(argsArr));
@@ -29,16 +26,13 @@ public class DrawOne {
             background = args.peek().startsWith("#") ? new Color(Integer.parseInt(args.peek().substring(1), 16)) : null;
             args.poll();
 
-            try {
-                worldborder = Integer.parseInt(args.peek());
-                args.poll();
-            } catch (Exception ignored) {
+            if (args.peek().matches("\\d+")) {
+                worldborder = Integer.parseInt(args.poll());
             }
 
             file = new File(args.poll());
         } catch (NullPointerException ex) {
-            System.err.println(USAGE);
-            ex.printStackTrace();
+            System.err.println("Usage: WorldPainter.jar 1 <region|chunk> <hue|alpha> <#bgHex|transparent> [worldborder] <regionDirectory>");
             System.exit(1);
         }
 
@@ -50,10 +44,9 @@ public class DrawOne {
         }
 
         String key = regionDrawer.saveImage();
-        if(key != null)
+        if (key != null) {
             System.out.println("https://bytebin.lucko.me/" + key);
-
-
+        }
     }
 
 

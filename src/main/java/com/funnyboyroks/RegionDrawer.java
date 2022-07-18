@@ -21,6 +21,16 @@ import java.util.zip.GZIPOutputStream;
 
 public class RegionDrawer {
 
+    private static final int TERMINAL_WIDTH;
+
+    static {
+        try {
+            TERMINAL_WIDTH = Integer.parseInt(new BufferedReader(new InputStreamReader(Runtime.getRuntime().exec(new String[]{ "bash", "-c", "tput cols 2> /dev/tty" }).getInputStream())).readLine());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public final File[]        regionFiles;
     public final File          folder;
     public final int           regionSize;
@@ -32,16 +42,6 @@ public class RegionDrawer {
     public       int           padding        = 5; // regions of padding on the image
     public       int           worldBorder;
     public       MinMax        chunkSizes;
-
-    private static final int TERMINAL_WIDTH;
-
-    static {
-        try {
-            TERMINAL_WIDTH = Integer.parseInt(new BufferedReader(new InputStreamReader(Runtime.getRuntime().exec(new String[]{ "bash", "-c", "tput cols 2> /dev/tty" }).getInputStream())).readLine());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public RegionDrawer(File inputDirectory, ColorMode colorMode, int worldBorder) {
         this.worldBorder = worldBorder;

@@ -19,7 +19,6 @@ public class MinMax {
     }
 
     public MinMax() {
-
     }
 
     public void add(long... nums) {

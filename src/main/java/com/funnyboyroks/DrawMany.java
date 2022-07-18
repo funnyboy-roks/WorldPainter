@@ -3,14 +3,12 @@ package com.funnyboyroks;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.*;
 
 public class DrawMany {
-
-    private static final String USAGE = "Usage: WorldPainter.jar <regionDirectories...>";
 
     public static void run(String[] argsArr) {
 
@@ -24,9 +22,8 @@ public class DrawMany {
             int background = 0;
             if (!args.isEmpty() && args.peek().startsWith("#")) {
                 background = Integer.parseInt(args.poll().substring(1), 16);
-
             }
-            var drawer = new RegionDrawer(file, colourMode, worldBorder);
+            RegionDrawer drawer = new RegionDrawer(file, colourMode, worldBorder);
             drawer.fillBackground = new Color(background);
             drawers.add(drawer);
         }
@@ -68,10 +65,8 @@ public class DrawMany {
         }
         System.out.println("Uploading...");
         String key = RegionDrawer.uploadImage(image);
-        if(key != null)
+        if (key != null) {
             System.out.println("https://bytebin.lucko.me/" + key);
-
-
+        }
     }
-
 }
